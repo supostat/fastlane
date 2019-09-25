@@ -44,9 +44,10 @@ class FastlaneHelpers
     remove_frontend_env
 
     temp_env_file = File.new(FRONTEND_ENV_PATH, "w")
-    #env_file
-    File.open("#{FRONTEND_ENV_FILE_PREFIX}.#{env}", "r") do |f|
-      temp_env_file.puts(f.read)
+
+    frontend_variables = env_variables.select {|(key, value)| frontend_keys.include?(key) }
+    frontend_variables.each do |(key, value)|
+      temp_env_file.puts("#{key}=\"#{value}\"")
     end
     temp_env_file.close
   end
