@@ -6,6 +6,9 @@ fastlane_require "byebug"
 fastlane_require "dotenv"
 require "./fastlane_helpers"
 
+# Tell fastlane to not automatically create a fastlane/README.md when running fastlane.
+skip_docs
+
 environment = UI.select("Select your environment: ", [FastlaneHelpers::PRODUCTION_ENV, FastlaneHelpers::DEVELOPMENT_ENV])
 env_variables = Dotenv.parse("../.env.fastlane.#{environment}")
 
