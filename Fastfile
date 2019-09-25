@@ -9,10 +9,8 @@ require "./fastlane_helpers"
 PRODUCTION_ENVIRONMENT = 'production'
 DEVELOPMENT_ENVIRONMENT = 'development'
 
-environment = UI.select("Select your environment: ", [PRODUCTION_ENVIRONMENT, DEVELOPMENT_ENVIRONMENT])
-fastlane_helpers = FastlaneHelpers.new(env: environment)
 master_branch = "master"
-required_keys = [
+required_deployment_keys = [
   "IOS_PROJECT_FOLDER",
   "ANDROID_PROJECT_FOLDER",
   "IOS_APP_NAME",
@@ -36,21 +34,30 @@ required_keys = [
   "ANDROID_APP_SUFFIX",
   "CODE_PUSH_ANDROID_DEPLOYMENT_KEY",
   "CODE_PUSH_IOS_DEPLOYMENT_KEY",
+  "IOS_CERTIFICATE_REPOSITORY",
+  "IOS_CERTIFICATE_USERNAME",
+]
+required_frontend_keys = [
   "SENTRY_LINK",
   "IOS_APP_DOWNLOAD_URL",
   "ANDROID_APP_DOWNLOAD_URL",
   "LAMBDA_BASE_URL",
   "BASE_URL",
-  "IOS_CERTIFICATE_REPOSITORY",
-  "IOS_CERTIFICATE_USERNAME",
 ]
 
-before_all do
-  env_variables = Dotenv.parse("../.env.fastlane.#{environment}")
-  fastlane_helpers.check_wrong_keys_existence(supplied_keys: env_variables.keys, required_keys: required_keys)
-  Dotenv.load("../.env.fastlane.#{environment}")
-  Dotenv.require_keys(*required_keys)
+required_keys = required_deployment_keys + required_frontend_keys
+environment = UI.select("Select your environment: ", [PRODUCTION_ENVIRONMENT, DEVELOPMENT_ENVIRONMENT])
+env_variables = Dotenv.parse("../.env.fastlane.#{environment}")
+fastlane_helpers = FastlaneHelpers.new(env: environment, env_variables: env_variables)
 
+fastlane_helpers.check_wrong_keys_existence(supplied_keys: env_variables.keys, required_keys: required_keys)
+
+Dotenv.load("../.env.fastlane.#{environment}")
+Dotenv.require_keys(*required_keys)
+
+
+
+before_all do
   if environment == PRODUCTION_ENVIRONMENT
     ensure_git_branch(
       branch: master_branch
@@ -60,7 +67,7 @@ before_all do
   ensure_git_status_clean
   fastlane_helpers.git_fetch
   fastlane_helpers.change_android_code_push_deployment_key(key: ENV["CODE_PUSH_ANDROID_DEPLOYMENT_KEY"])
-  fastlane_helpers.generate_frontend_env
+  fastlane_helpers.generate_frontend_env(frontend_keys: required_frontend_keys)
 end
 
 lane :full_deploy do
