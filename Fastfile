@@ -55,8 +55,6 @@ fastlane_helpers.check_wrong_keys_existence(required_keys: required_keys)
 Dotenv.load("../.env.fastlane.#{environment}")
 Dotenv.require_keys(*required_keys)
 
-
-
 before_all do
   if environment == PRODUCTION_ENVIRONMENT
     ensure_git_branch(
