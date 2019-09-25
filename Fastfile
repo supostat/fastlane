@@ -4,68 +4,32 @@ fastlane_require "semantic/core_ext"
 fastlane_require "aws-sdk"
 fastlane_require "byebug"
 fastlane_require "dotenv"
-require "./fastlane_helpers"
+require "./fastlane_helpers_instance"
 
-PRODUCTION_ENVIRONMENT = 'production'
-DEVELOPMENT_ENVIRONMENT = 'development'
-
-master_branch = "master"
-required_deployment_keys = [
-  "IOS_PROJECT_FOLDER",
-  "ANDROID_PROJECT_FOLDER",
-  "IOS_APP_NAME",
-  "IOS_PROJECT_FILE_PATH",
-  "IOS_APP_IDENTIFIER",
-  "IOS_PROJECT_SCHEME",
-  "CODE_PUSH_IOS",
-  "CODE_PUSH_ANDROID",
-  "S3_ACCESS_KEY",
-  "S3_SECRET_ACCESS_KEY",
-  "S3_BUCKET",
-  "S3_REGION",
-  "S3_IMAGE_BUCKET",
-  "S3_IMAGE_FOLDER",
-  "S3_IOS_APP_DIR",
-  "S3_ANDROID_APP_DIR",
-  "IOS_PLIST_PATH",
-  "ANDROID_BUILD_GRADLE_PATH",
-  "APP_NAME",
-  "ANDROID_APP_PATH",
-  "ANDROID_APP_SUFFIX",
-  "CODE_PUSH_ANDROID_DEPLOYMENT_KEY",
-  "CODE_PUSH_IOS_DEPLOYMENT_KEY",
-  "IOS_CERTIFICATE_REPOSITORY",
-  "IOS_CERTIFICATE_USERNAME",
-]
-required_frontend_keys = [
-  "SENTRY_LINK",
-  "IOS_APP_DOWNLOAD_URL",
-  "ANDROID_APP_DOWNLOAD_URL",
-  "LAMBDA_BASE_URL",
-  "BASE_URL",
-]
-
-required_keys = required_deployment_keys + required_frontend_keys
-environment = UI.select("Select your environment: ", [PRODUCTION_ENVIRONMENT, DEVELOPMENT_ENVIRONMENT])
+environment = UI.select("Select your environment: ", [FastlaneHelpers::PRODUCTION_ENV, FastlaneHelpers::DEVELOPMENT_ENV])
 env_variables = Dotenv.parse("../.env.fastlane.#{environment}")
-fastlane_helpers = FastlaneHelpers.new(env: environment, env_variables: env_variables)
 
-fastlane_helpers.check_wrong_keys_existence(required_keys: required_keys)
+fastlane_helpers_instance = FastlaneHelpers.new(
+  env: environment,
+  env_variables: env_variables,
+)
+
+fastlane_helpers_instance.check_wrong_keys_existence
 
 Dotenv.load("../.env.fastlane.#{environment}")
-Dotenv.require_keys(*required_keys)
+Dotenv.require_keys(*FastlaneHelpers::REQUIRED_ENV_KEYS)
 
 before_all do
-  if environment == PRODUCTION_ENVIRONMENT
+  if environment == FastlaneHelpers::PRODUCTION_ENV
     ensure_git_branch(
       branch: master_branch
     )
   end
 
   ensure_git_status_clean
-  fastlane_helpers.git_fetch
-  fastlane_helpers.change_android_code_push_deployment_key(key: ENV["CODE_PUSH_ANDROID_DEPLOYMENT_KEY"])
-  fastlane_helpers.generate_frontend_env(frontend_keys: required_frontend_keys)
+  fastlane_helpers_instance.git_fetch
+  fastlane_helpers_instance.change_android_code_push_deployment_key(key: ENV["CODE_PUSH_ANDROID_DEPLOYMENT_KEY"])
+  fastlane_helpers_instance.generate_frontend_env
 end
 
 lane :full_deploy do
@@ -73,16 +37,16 @@ lane :full_deploy do
   ios_app_url = nil
   android_app_url = nil
   begin
-    new_version, tag_name = fastlane_helpers.increment_major_version!
+    new_version, tag_name = fastlane_helpers_instance.increment_major_version!
 
     if git_tag_exists(tag: tag_name)
       raise "Tag: #{tag_name} already exist."
     end
     update_ios_version!(version: new_version)
-    fastlane_helpers.update_android_version!(version: new_version)
+    fastlane_helpers_instance.update_android_version!(version: new_version)
     update_ios_deployment_data
     update_android_deployment_data
-    fastlane_helpers.git_add_and_commit_all(message: "Version Bump #{new_version}")
+    fastlane_helpers_instance.git_add_and_commit_all(message: "Version Bump #{new_version}")
     begin
       add_git_tag(
         tag: tag_name,
@@ -109,32 +73,32 @@ lane :full_deploy do
       UI.success("iOS app can be downloaded at '#{android_app_url}'")
     rescue SystemExit, Interrupt => ex
       puts "Task was stoped by CTRL+C"
-      fastlane_helpers.git_delete_tag(tag: tag_name)
-      fastlane_helpers.git_delete_tag_remote(tag: tag_name)
+      fastlane_helpers_instance.git_delete_tag(tag: tag_name)
+      fastlane_helpers_instance.git_delete_tag_remote(tag: tag_name)
       raise ex
     rescue => ex
-      fastlane_helpers.git_delete_tag(tag: tag_name)
-      fastlane_helpers.git_delete_tag_remote(tag: tag_name)
+      fastlane_helpers_instance.git_delete_tag(tag: tag_name)
+      fastlane_helpers_instance.git_delete_tag_remote(tag: tag_name)
       raise ex
     end
   rescue SystemExit, Interrupt => ex
     puts "Task was stoped by CTRL+C"
-    fastlane_helpers.git_reset_hard(hash: last_commit_hash)
+    fastlane_helpers_instance.git_reset_hard(hash: last_commit_hash)
     push_to_git_remote(
       force: false,
       force_with_lease: true,
       tags: false,
     )
-    fastlane_helpers.remove_frontend_env
+    fastlane_helpers_instance.remove_frontend_env
     UI.error(ex.message)
   rescue => ex
-    fastlane_helpers.git_reset_hard(hash: last_commit_hash)
+    fastlane_helpers_instance.git_reset_hard(hash: last_commit_hash)
     push_to_git_remote(
       force: true,
       force_with_lease: false,
       tags: false,
     )
-    fastlane_helpers.remove_frontend_env
+    fastlane_helpers_instance.remove_frontend_env
     UI.error(ex.message)
   end
 end
@@ -142,13 +106,13 @@ end
 lane :js_deploy do
   last_commit_hash = last_git_commit.fetch(:commit_hash)
   begin
-    new_version, tag_name = fastlane_helpers.increment_minor_version!
+    new_version, tag_name = fastlane_helpers_instance.increment_minor_version!
     if git_tag_exists(tag: tag_name)
       raise "Tag: #{tag_name} already exist."
     end
     update_ios_deployment_data
     update_android_deployment_data
-    fastlane_helpers.check_and_update_version_if_development(version: new_version)
+    fastlane_helpers_instance.check_and_update_version_if_development(version: new_version)
     begin
       add_git_tag(
         tag: tag_name,
@@ -162,18 +126,18 @@ lane :js_deploy do
       ios_code_push_deploy
       android_code_push_deploy
     rescue => ex
-      fastlane_helpers.git_delete_tag(tag: tag_name)
-      fastlane_helpers.git_delete_tag_remote(tag: tag_name)
+      fastlane_helpers_instance.git_delete_tag(tag: tag_name)
+      fastlane_helpers_instance.git_delete_tag_remote(tag: tag_name)
       raise ex
     end
   rescue => ex
-    fastlane_helpers.git_reset_hard(hash: last_commit_hash)
+    fastlane_helpers_instance.git_reset_hard(hash: last_commit_hash)
     push_to_git_remote(
       force: false,
       force_with_lease: true,
       tags: false,
     )
-    fastlane_helpers.remove_frontend_env
+    fastlane_helpers_instance.remove_frontend_env
     UI.error(ex.message)
   end
 end
@@ -209,7 +173,7 @@ end
 
 desc "Deploy images for the app download pages"
 private_lane :images_deploy do
-  fastlane_helpers.upload_files_to_s3
+  fastlane_helpers_instance.upload_files_to_s3
   UI.success("Files uploaded successful")
 end
 
@@ -238,7 +202,7 @@ private_lane :update_ios_deployment_data do
     use_automatic_signing: false,
     profile_name: provision_profile,
   )
-  fastlane_helpers.update_ios_bundle_identifier(app_id: ENV["IOS_APP_IDENTIFIER"], xcodeproj_path: ENV["IOS_PROJECT_FILE_PATH"])
+  fastlane_helpers_instance.update_ios_bundle_identifier(app_id: ENV["IOS_APP_IDENTIFIER"], xcodeproj_path: ENV["IOS_PROJECT_FILE_PATH"])
 end
 
 desc "Build the iOS application."

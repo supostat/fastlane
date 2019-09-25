@@ -23,28 +23,66 @@ end
 class FastlaneHelpers
   PRODUCTION_ENV = "production"
   DEVELOPMENT_ENV = "development"
-  FRONTEND_ENV_FILE_PREFIX = ".env.frontend"
+  MASTER_BRANCH = "master"
   FRONTEND_ENV_PATH = "../.env"
+  FRONTEND_ENV_KEYS = [
+    "APP_SENTRY_LINK",
+    "APP_IOS_DOWNLOAD_URL",
+    "APP_ANDROID_DOWNLOAD_URL",
+    "APP_LAMBDA_BASE_URL",
+    "APP_BASE_URL",
+  ].freeze
+  DEPLOYMENT_ENV_KEYS = [
+    "IOS_PROJECT_FOLDER",
+    "ANDROID_PROJECT_FOLDER",
+    "IOS_APP_NAME",
+    "IOS_PROJECT_FILE_PATH",
+    "IOS_APP_IDENTIFIER",
+    "IOS_PROJECT_SCHEME",
+    "CODE_PUSH_IOS",
+    "CODE_PUSH_ANDROID",
+    "S3_ACCESS_KEY",
+    "S3_SECRET_ACCESS_KEY",
+    "S3_BUCKET",
+    "S3_REGION",
+    "S3_IMAGE_BUCKET",
+    "S3_IMAGE_FOLDER",
+    "S3_IOS_APP_DIR",
+    "S3_ANDROID_APP_DIR",
+    "IOS_PLIST_PATH",
+    "ANDROID_BUILD_GRADLE_PATH",
+    "APP_NAME",
+    "ANDROID_APP_PATH",
+    "ANDROID_APP_SUFFIX",
+    "CODE_PUSH_ANDROID_DEPLOYMENT_KEY",
+    "CODE_PUSH_IOS_DEPLOYMENT_KEY",
+    "IOS_CERTIFICATE_REPOSITORY",
+    "IOS_CERTIFICATE_USERNAME",
+  ].freeze
+
+  REQUIRED_ENV_KEYS = (FastlaneHelpers::DEPLOYMENT_ENV_KEYS + FastlaneHelpers::FRONTEND_ENV_KEYS).freeze
 
   def initialize(env:, env_variables:)
     @env = env
     @env_variables = env_variables
   end
 
-  def check_wrong_keys_existence(required_keys:)
+  def check_wrong_keys_existence
     supplied_keys = env_variables.keys
+    required_keys = FastlaneHelpers::REQUIRED_ENV_KEYS
+
     if (!supplied_keys.all? {|key| required_keys.include?(key) })
       unsupported_keys = supplied_keys.select {|key| !required_keys.include?(key)}
       raise "Invalid vars supplied, #{unsupported_keys.join(", ")}"
     end
   end
 
-  def generate_frontend_env(frontend_keys:)
+  def generate_frontend_env
     # Ensure fresh file
     remove_frontend_env
 
     temp_env_file = File.new(FRONTEND_ENV_PATH, "w")
-
+    frontend_keys = FastlaneHelpers::FRONTEND_ENV_KEYS
     frontend_variables = env_variables.select {|(key, value)| frontend_keys.include?(key) }
     frontend_variables.each do |(key, value)|
       temp_env_file.puts("#{key}=\"#{value}\"")
