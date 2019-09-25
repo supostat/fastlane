@@ -12,32 +12,33 @@ DEVELOPMENT_ENVIRONMENT = 'development'
 environment = UI.select("Select your environment: ", [PRODUCTION_ENVIRONMENT, DEVELOPMENT_ENVIRONMENT])
 fastlane_helpers = FastlaneHelpers.new(env: environment)
 master_branch = "master"
+required_keys = [
+  "IOS_PROJECT_FOLDER",
+  "ANDROID_PROJECT_FOLDER",
+  "IOS_APP_NAME",
+  "IOS_PROJECT_FILE_PATH",
+  "IOS_APP_IDENTIFIER",
+  "IOS_PROJECT_SCHEME",
+  "CODE_PUSH_IOS",
+  "CODE_PUSH_ANDROID",
+  "S3_ACCESS_KEY",
+  "S3_SECRET_ACCESS_KEY",
+  "S3_BUCKET",
+  "S3_REGION",
+  "S3_IMAGE_BUCKET",
+  "S3_IMAGE_FOLDER",
+  "S3_IOS_APP_DIR",
+  "S3_ANDROID_APP_DIR",
+  "IOS_PLIST_PATH",
+  "ANDROID_BUILD_GRADLE_PATH",
+  "APP_NAME",
+  "ANDROID_APP_PATH",
+  "ANDROID_APP_SUFFIX"
+]
 
 before_all do
   Dotenv.load("../.env.fastlane.#{environment}")
-  Dotenv.require_keys(
-    "IOS_PROJECT_FOLDER",
-    "ANDROID_PROJECT_FOLDER",
-    "IOS_APP_NAME",
-    "IOS_PROJECT_FILE_PATH",
-    "IOS_APP_IDENTIFIER",
-    "IOS_PROJECT_SCHEME",
-    "CODE_PUSH_IOS",
-    "CODE_PUSH_ANDROID",
-    "S3_ACCESS_KEY",
-    "S3_SECRET_ACCESS_KEY",
-    "S3_BUCKET",
-    "S3_REGION",
-    "S3_IMAGE_BUCKET",
-    "S3_IMAGE_FOLDER",
-    "S3_IOS_APP_DIR",
-    "S3_ANDROID_APP_DIR",
-    "IOS_PLIST_PATH",
-    "ANDROID_BUILD_GRADLE_PATH",
-    "APP_NAME",
-    "ANDROID_APP_PATH",
-    "ANDROID_APP_SUFFIX"
-  )
+  Dotenv.require_keys(*required_keys)
 
   if environment == PRODUCTION_ENVIRONMENT
     ensure_git_branch(
