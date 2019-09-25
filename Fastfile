@@ -50,7 +50,7 @@ environment = UI.select("Select your environment: ", [PRODUCTION_ENVIRONMENT, DE
 env_variables = Dotenv.parse("../.env.fastlane.#{environment}")
 fastlane_helpers = FastlaneHelpers.new(env: environment, env_variables: env_variables)
 
-fastlane_helpers.check_wrong_keys_existence(supplied_keys: env_variables.keys, required_keys: required_keys)
+fastlane_helpers.check_wrong_keys_existence(required_keys: required_keys)
 
 Dotenv.load("../.env.fastlane.#{environment}")
 Dotenv.require_keys(*required_keys)
