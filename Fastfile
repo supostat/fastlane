@@ -37,6 +37,8 @@ required_keys = [
 ]
 
 before_all do
+  env_variables = Dotenv.parse("../.env.fastlane.#{environment}")
+  fastlane_helpers.check_wrong_keys_existence(supplied_keys: env_variables.keys, required_keys: required_keys)
   Dotenv.load("../.env.fastlane.#{environment}")
   Dotenv.require_keys(*required_keys)
 
