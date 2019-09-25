@@ -26,18 +26,20 @@ class FastlaneHelpers
   FRONTEND_ENV_FILE_PREFIX = ".env.frontend"
   FRONTEND_ENV_PATH = "../.env"
 
-  def initialize(env:)
+  def initialize(env:, env_variables:)
     @env = env
+    @env_variables = env_variables
   end
 
-  def check_wrong_keys_existence(supplied_keys:, required_keys:)
+  def check_wrong_keys_existence(required_keys:)
+    supplied_keys = env_variables.keys
     if (!supplied_keys.all? {|key| required_keys.include?(key) })
       unsupported_keys = supplied_keys.select {|key| !required_keys.include?(key)}
       raise "Invalid vars supplied, #{unsupported_keys.join(", ")}"
     end
   end
 
-  def generate_frontend_env
+  def generate_frontend_env(frontend_keys:)
     # Ensure fresh file
     remove_frontend_env
 
@@ -244,7 +246,7 @@ class FastlaneHelpers
   end
 
   private
-  attr_reader :env
+  attr_reader :env, :env_variables
 
   def get_package_json
     file = File.read("../package.json")
