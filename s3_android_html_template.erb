@@ -1,0 +1,52 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Boss deploy test Android app</title>
+  </head>
+  <body>
+    <style type="text/css">
+      body {
+        padding: 50px;
+        font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+      }
+
+      a {
+        color: #00B7FF;
+      }
+
+      .container {
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+      }
+
+      .full-image {
+        max-width: 100vw;
+        margin-bottom: 30px;
+      }
+    </style>
+
+    <div class="container">
+      <h1 class="title" id="desktop">Please open this page from your Android device</h1>
+      <div id="android">
+        <h1 class="title">Download boss deploy test app</h1>
+        <a href="<%= apk_url %>" id="text" class="btn btn-lg btn-default">
+            <img src="<%= base_img_url %>android.png" alt="download boss deploy test app for ios" width="250" class="full-image">
+        </a>
+        <br>
+        <p>Built on <%= Time.now.strftime('%a, %e %b %Y %H:%M %p') %></p>
+      </div>
+    </div>
+    <script type='text/javascript'>
+      if (/Android/i.test(navigator.userAgent))
+      {
+        document.getElementById("desktop").remove()
+      }
+      else
+      {
+        document.getElementById("android").remove()
+      }
+    </script>
+  </body>
+</html>
