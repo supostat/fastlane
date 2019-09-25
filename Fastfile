@@ -210,7 +210,7 @@ end
 
 desc "Fetch certificates and provisioning profiles"
 lane :certificates do
-  match(app_identifier: ENV["IOS_APP_IDENTIFIER"], type: "enterprise")
+  match(app_identifier: ENV["IOS_APP_IDENTIFIER"], type: "enterprise", username: ENV["IOS_CERTIFICATE_USERNAME"], git_url: ENV["IOS_CERTIFICATE_REPOSITORY"])
 end
 
 private_lane :update_ios_deployment_data do
