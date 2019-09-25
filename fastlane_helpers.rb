@@ -30,6 +30,13 @@ class FastlaneHelpers
     @env = env
   end
 
+  def check_wrong_keys_existence(supplied_keys:, required_keys:)
+    if (!supplied_keys.all? {|key| required_keys.include?(key) })
+      unsupported_keys = supplied_keys.select {|key| !required_keys.include?(key)}
+      raise "Invalid vars supplied, #{unsupported_keys.join(", ")}"
+    end
+  end
+
   def generate_frontend_env
     # Ensure fresh file
     remove_frontend_env
