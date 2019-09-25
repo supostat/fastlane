@@ -14,7 +14,7 @@ fastlane_helpers = FastlaneHelpers.new(env: environment)
 master_branch = "master"
 
 before_all do
-  Dotenv.load(".env.#{environment}")
+  Dotenv.load("../.env.fastlane.#{environment}")
   Dotenv.require_keys(
     "IOS_PROJECT_FOLDER",
     "ANDROID_PROJECT_FOLDER",
